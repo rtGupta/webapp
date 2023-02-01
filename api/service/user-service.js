@@ -26,3 +26,20 @@ export const createUser = async (user) => {
     throw new Error(err);
   }
 };
+
+export const getUser = async (id) => {
+  const db = connect();
+
+  let data = {};
+  try {
+    data = await db.users.findOne({
+      raw: true,
+      where: {
+        id: id
+      }
+    });
+    return data;
+  } catch (err) {
+    console.log(err);
+  }
+}

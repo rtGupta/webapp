@@ -1,5 +1,6 @@
 import emailValidator from "email-validator";
 import passwordValidator from "password-validator";
+import bcrypt from "bcrypt";
 
 import * as userService from "../service/user-service.js";
 
@@ -8,11 +9,17 @@ const schema = new passwordValidator();
 
 // Add properties to it
 schema
-  .is().min(8)
-  .has().uppercase()
-  .has().lowercase()
-  .has().digits(2)
-  .has().not().spaces()
+  .is()
+  .min(8)
+  .has()
+  .uppercase()
+  .has()
+  .lowercase()
+  .has()
+  .digits(2)
+  .has()
+  .not()
+  .spaces();
 
 const setErrorResponse = (error, response) => {
   response.status(500);
@@ -58,5 +65,71 @@ export const post = async (request, response) => {
         message: "Invalid Email or password.",
       });
     }
+  }
+};
+
+export const get = async (request, response) => {
+  try {
+    const id = request.params.id;
+
+    // check for basic auth header
+    if (
+      !request.headers.authorization ||
+      request.headers.authorization.indexOf("Basic ") === -1
+    ) {
+      response.status(403).json({
+        message: "Missing Request Header: Authorization",
+      });
+      return;
+    }
+
+    // verify auth credentials
+    const base64Credentials = request.headers.authorization.split(" ")[1];
+    console.log(base64Credentials);
+    const credentials = Buffer.from(base64Credentials, "base64").toString(
+      "ascii"
+    );
+    const [email, password] = credentials.split(":");
+
+    const user = await userService.getUser(id);
+    if (!user) {
+      response.status(404).json({
+        message: "User not found!",
+      });
+      return;
+    }
+
+    if (email != user.username) {
+      response.status(401).json({
+        message: "Oops! Authorization Failed.",
+      });
+      return;
+    }
+    bcrypt.compare(password, user.password, (err, res) => {
+      if (err) {
+        response.status(400).json({
+          message: "Bad Request",
+        });
+        return;
+      }
+      if (res) {
+        const resData = {
+          id: user.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          username: user.username,
+          account_created: user.createdAt,
+          account_updated: user.updatedAt,
+        };
+
+        response.status(200).json(resData);
+      } else {
+        response.status(401).json({
+          message: "Oops! Authorization failed.",
+        });
+      }
+    });
+  } catch (error) {
+    setErrorResponse(error, response);
   }
 };
