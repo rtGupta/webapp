@@ -9,8 +9,6 @@ export const createUser = async (user) => {
 
     var encryptedPwd = await bcrypt.hash(user.password, 10);
     user.password = encryptedPwd;
-    user.createdAt = new Date();
-    user.updatedAt = new Date();
     data = await db.users.create(user);
 
     return {
