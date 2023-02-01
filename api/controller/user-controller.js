@@ -74,7 +74,12 @@ export const post = async (request, response) => {
   } else {
     if (emailValidator.validate(email) && schema.validate(password)) {
       try {
-        const payload = request.body;
+        const payload = {
+          firstName: request.body.firstName,
+          lastName: request.body.lastName,
+          username: request.body.username,
+          password: request.body.password
+        };
         const user = await userService.createUser(payload);
         setSuccessResponse(user, response);
       } catch (error) {
@@ -86,7 +91,7 @@ export const post = async (request, response) => {
         } else setErrorResponse(error, response);
       }
     } else {
-      response.status(401);
+      response.status(400);
       response.json({
         message: "Invalid Email or password.",
       });
@@ -114,7 +119,7 @@ export const get = async (request, response) => {
 
     if (authCredentials && authCredentials.email != user.username) {
       response.status(401).json({
-        message: "Oops! Authorization Failed.",
+        message: "Oops! Unauthorized Access",
       });
       return;
     }
@@ -138,7 +143,7 @@ export const get = async (request, response) => {
         response.status(200).json(resData);
       } else {
         response.status(401).json({
-          message: "Oops! Authorization failed.",
+          message: "Oops! Unauthorized Access",
         });
       }
     });
@@ -166,7 +171,7 @@ export const update = async (request, response) => {
 
     if (authCredentials && authCredentials.email != user.username) {
       response.status(401).json({
-        message: "Oops! Authorization Failed.",
+        message: "Oops! Unauthorized Access.",
       });
       return;
     }
@@ -211,7 +216,6 @@ export const update = async (request, response) => {
             }
           }
           const data = await userService.updateUser(updated);
-          console.log(data);
           const updatedUserObj = {
             id: data[1].id,
             firstName: data[1].firstName,
@@ -221,11 +225,11 @@ export const update = async (request, response) => {
             account_updated: data[1].updatedAt,
           };
 
-          response.status(200).json(updatedUserObj);
+          response.status(204).json(updatedUserObj);
           return;
         } else {
           response.status(401).json({
-            message: "Oops! Authorization failed",
+            message: "Oops! UnAuthorized Access",
           });
         }
       }
