@@ -43,3 +43,22 @@ export const getUser = async (id) => {
     console.log(err);
   }
 }
+
+export const updateUser = async (updatedUser) => {
+  const db = connect();
+
+  let data = {};
+  try {
+    data = await db.users.update(updatedUser, {
+      raw: true,
+      where: {
+        id: updatedUser.id
+      },
+      returning: true,
+      plain: true
+    });
+    return data;
+  } catch (err) {
+    console.log(err);
+  }
+}
