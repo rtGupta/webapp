@@ -1,5 +1,8 @@
-import userRouter from './user-router.js';
+import userRouter from "./user-router.js";
 
 export default (app) => {
-    app.use('/', userRouter);
-}
+  app.get("/healthz", (req, res) => {
+    res.status(200).send("Ok");
+  });
+  app.use("/", userRouter);
+};
