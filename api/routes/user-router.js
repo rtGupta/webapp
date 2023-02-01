@@ -7,5 +7,6 @@ router.route("/v1/user").post(userController.post);
 
 router.route('/v1/user/:id')
     .get(userController.get)
+    .put(userController.update)
 
 export default router;
