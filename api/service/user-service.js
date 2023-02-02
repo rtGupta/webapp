@@ -42,6 +42,23 @@ export const getUser = async (id) => {
   }
 }
 
+export const getUserByUsername = async (username) => {
+  const db = connect();
+
+  let data = {};
+  try {
+    data = await db.users.findOne({
+      raw: true,
+      where: {
+        username 
+      }
+    });
+    return data;
+  } catch (err) {
+    console.log(err);
+  }
+}
+
 export const updateUser = async (updatedUser) => {
   const db = connect();
 
