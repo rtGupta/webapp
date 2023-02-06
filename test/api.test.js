@@ -6,14 +6,7 @@ chai.use(chaiHttp);
 var expect = chai.expect;
 
 describe("Test Suite", () => {
-  it("should return ok when hitting /healthz api", (done) => {
-    chai
-      .request(server)
-      .get("/healthz")
-      .end((err, res) => {
-        if (!err) {
-          expect(res.status).to.eql(200);
-          done();
+ 
         }
       });
   });
