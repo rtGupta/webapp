@@ -31,30 +31,44 @@ const setSuccessResponse = (obj, response) => {
   response.json(obj);
 };
 
-const auth = (request, response) => {
-  // check for basic auth header
-  if (
-    !request.headers.authorization ||
-    request.headers.authorization.indexOf("Basic ") === -1
-  ) {
-    response.status(401).json({
-      message: "Missing Request Header: Authorization",
-    });
-    return;
+export const getAuthorizedUser = async (request, response) => {
+  try {
+    // check for basic auth header
+    if (
+      !request.headers.authorization ||
+      request.headers.authorization.indexOf("Basic ") === -1
+    ) {
+      response.status(401).json({
+        message: "Missing Request Header: Authorization",
+      });
+      return;
+    }
+
+    // verify auth credentials
+    const base64Credentials = request.headers.authorization.split(" ")[1];
+    console.log(base64Credentials);
+    const credentials = Buffer.from(base64Credentials, "base64").toString(
+      "ascii"
+    );
+    const [email, password] = credentials.split(":");
+
+    const authUser = await userService.getUserByUsername(email);
+    if (!authUser) {
+      return {
+        message: "Oops! Unauthorized Access",
+      };
+    }
+    const compareRes = await bcrypt.compare(password, authUser.password);
+    if (!compareRes) {
+      return {
+        message: "Oops! Unauthorized Access",
+      };
+    } else {
+      return authUser;
+    }
+  } catch (error) {
+    throw new Error(error);
   }
-
-  // verify auth credentials
-  const base64Credentials = request.headers.authorization.split(" ")[1];
-  console.log(base64Credentials);
-  const credentials = Buffer.from(base64Credentials, "base64").toString(
-    "ascii"
-  );
-  const [email, password] = credentials.split(":");
-
-  return {
-    email,
-    password,
-  };
 };
 
 export const post = async (request, response) => {
@@ -71,6 +85,14 @@ export const post = async (request, response) => {
     response.json({
       message: "A required field is empty.",
     });
+  } else if (
+    "updatedAt" in request.body ||
+    "id" in request.body ||
+    "createdAt" in request.body
+  ) {
+    response.status(400).json({
+      message: "Bad Request",
+    });
   } else {
     if (emailValidator.validate(email) && schema.validate(password)) {
       try {
@@ -78,7 +100,7 @@ export const post = async (request, response) => {
           firstName: request.body.firstName,
           lastName: request.body.lastName,
           username: request.body.username,
-          password: request.body.password
+          password: request.body.password,
         };
         const user = await userService.createUser(payload);
         setSuccessResponse(user, response);
@@ -103,51 +125,35 @@ export const get = async (request, response) => {
   try {
     const id = request.params.id;
 
-    const authCredentials = auth(request, response);
-    if (!authCredentials) {
-      return;
-    }
-
-    const user = await userService.getUser(id);
-    if (!user) {
-      response.status(404).json({
-        message: "User not found!",
-      });
-      return;
-    }
-
-    const authUser = await userService.getUserByUsername(authCredentials.email);
-
-    if (!authUser) {
+    const result = await getAuthorizedUser(request, response);
+    if (result.message) {
       response.status(401).json({
-        message: "Oops! Unauthorized Access",
-      });
-      return;
-    }
-
-    const compareRes = await bcrypt.compare(
-      authCredentials.password,
-      authUser.password
-    );
-    if (compareRes && authUser.id == request.params.id) {
-      const resData = {
-        id: user.id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        username: user.username,
-        account_created: user.createdAt,
-        account_updated: user.updatedAt,
-      };
-
-      response.status(200).json(resData);
-    } else if (compareRes && authUser.id != id) {
-      response.status(403).json({
-        message: "Forbidden",
+        message: result.message,
       });
     } else {
-      response.status(401).json({
-        message: "Oops! Unauthorized Access",
-      });
+      if (result.id != id) {
+        response.status(403).json({
+          message: "Forbidden",
+        });
+      } else {
+        const user = await userService.getUser(id);
+        if (!user) {
+          response.status(401).json({
+            message: "Oops! Unauthorized Access",
+          });
+          return;
+        }
+        const resData = {
+          id: user.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          username: user.username,
+          account_created: user.createdAt,
+          account_updated: user.updatedAt,
+        };
+
+        response.status(200).json(resData);
+      }
     }
   } catch (error) {
     setErrorResponse(error, response);
@@ -157,90 +163,62 @@ export const get = async (request, response) => {
 export const update = async (request, response) => {
   try {
     const id = request.params.id;
-    const authCredentials = auth(request, response);
 
-    if (!authCredentials) {
-      return;
-    }
-
-    const user = await userService.getUser(id);
-    if (!user) {
-      response.status(404).json({
-        message: "User not found!",
-      });
-      return;
-    }
-
-    const authUser = await userService.getUserByUsername(authCredentials.email);
-    if (!authUser) {
+    const result = await getAuthorizedUser(request, response);
+    if (result.message) {
       response.status(401).json({
-        message: "Oops! Unauthorized Access",
+        message: result.message,
       });
-      return;
-    }
-
-    const compareRes = await bcrypt.compare(
-      authCredentials.password,
-      authUser.password
-    );
-    if (compareRes && authUser.id == request.params.id) {
-      if (
-        "updatedAt" in request.body ||
-        !("username" in request.body) ||
-        "id" in request.body ||
-        "createdAt" in request.body
-      ) {
-        response.status(400).json({
-          message: "Bad Request",
+    } else {
+      if (result.id != id) {
+        response.status(403).json({
+          message: "Forbidden",
         });
-        return;
-      }
-
-      if (request.body.username != user.username) {
-        response.status(400).json({
-          message: "Username field cannot be updated.",
-        });
-        return;
-      }
-      const updated = {
-        ...request.body,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
-      };
-      updated.id = id;
-      if (updated.password) {
-        if (schema.validate(updated.password)) {
-          const newEncryptedPwd = await bcrypt.hash(updated.password, 10);
-          updated.password = newEncryptedPwd;
-        } else {
-          response.status(401).send({
-            message: "Invalid Password!",
+      } else {
+        if (
+          "updatedAt" in request.body ||
+          "username" in request.body ||
+          "id" in request.body ||
+          "createdAt" in request.body
+        ) {
+          response.status(400).json({
+            message: "Bad Request",
           });
           return;
         }
-      }
-      const data = await userService.updateUser(updated);
-      const updatedUserObj = {
-        id: data[1].id,
-        firstName: data[1].firstName,
-        lastName: data[1].lastName,
-        username: data[1].username,
-        account_created: data[1].createdAt,
-        account_updated: data[1].updatedAt,
-      };
+        const updated = {
+          ...request.body,
+          createdAt: result.createdAt,
+          updatedAt: result.updatedAt,
+        };
+        updated.id = id;
+        if (updated.password) {
+          if (schema.validate(updated.password)) {
+            const newEncryptedPwd = await bcrypt.hash(updated.password, 10);
+            updated.password = newEncryptedPwd;
+          } else {
+            response.status(401).send({
+              message: "Invalid Password!",
+            });
+            return;
+          }
+        }
+        const data = await userService.updateUser(updated);
+        const updatedUserObj = {
+          id: data[1].id,
+          firstName: data[1].firstName,
+          lastName: data[1].lastName,
+          username: data[1].username,
+          account_created: data[1].createdAt,
+          account_updated: data[1].updatedAt,
+        };
 
-      response.status(204).json(updatedUserObj);
-      return;
-    } else if (compareRes && authUser.id != id) {
-      response.status(403).json({
-        message: "Forbidden",
-      });
-    } else {
-      response.status(401).json({
-        message: "Oops! Unauthorized Access",
-      });
+        response.status(204).json(updatedUserObj);
+        return;
+      }
     }
   } catch (error) {
+    console.log(error);
     setErrorResponse(error, response);
   }
 };
