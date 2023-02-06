@@ -3,9 +3,9 @@ import * as userController from "./../controller/user-controller.js";
 
 const router = express.Router();
 
-router.route("/v1/user").post(userController.post);
+router.route("/user").post(userController.post);
 
-router.route('/v1/user/:id')
+router.route('/user/:id')
     .get(userController.get)
     .put(userController.update)
 
