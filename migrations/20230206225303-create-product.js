@@ -24,7 +24,7 @@ module.exports = {
         type: Sequelize.STRING
       },
       quantity: {
-        type: DataTypes.INTEGER,
+        type: Sequelize.INTEGER,
         validate: {
           isInt: true,
           min: 0,

@@ -22,3 +22,20 @@ export const createProduct = async (product) => {
     throw new Error(err);
   }
 };
+
+export const getProduct = async (productId) => {
+  const db = connect();
+
+  let data = {};
+  try {
+    data = await db.products.findOne({
+      raw: true,
+      where: {
+        id: productId,
+      },
+    });
+    return data;
+  } catch (err) {
+    console.log(err);
+  }
+};
