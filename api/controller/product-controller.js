@@ -51,11 +51,29 @@ export const post = async (request, response) => {
       });
     } else if (error.message.includes("SequelizeValidationError")) {
       response.status(400).send({
-        message: error.message
+        message: error.message,
       });
     } else {
       console.log(error);
       setErrorResponse(error, response);
     }
+  }
+};
+
+export const get = async (request, response) => {
+  const productId = request.params.id;
+
+  try {
+    const product = await productService.getProduct(productId);
+
+    if (!product) {
+      response.status(404).send({
+        message: "Product not found!",
+      });
+      return;
+    }
+    setSuccessResponse(product, response);
+  } catch (error) {
+    setErrorResponse(error, response);
   }
 };
