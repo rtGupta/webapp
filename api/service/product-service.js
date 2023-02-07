@@ -39,3 +39,23 @@ export const getProduct = async (productId) => {
     console.log(err);
   }
 };
+
+export const updateProduct = async (product) => {
+  const db = connect();
+
+  let data = {};
+  try {
+    data = await db.products.update(product, {
+      raw: true,
+      where: {
+        id: product.id,
+      },
+      returning: true,
+      plain: true,
+    });
+    return data;
+  } catch (err) {
+    console.log(err);
+    throw new Error(err);
+  }
+};
