@@ -1,6 +1,7 @@
 import { Sequelize, Model, DataTypes } from "sequelize";
 import Config from "../config/config.js";
 import User from "./model/user.js";
+import Product from "./model/product.js";
 
 const connect = () => {
     const sequelize = new Sequelize(Config.database, Config.username, Config.password, {
@@ -18,6 +19,7 @@ const connect = () => {
     db.Sequelize = Sequelize;
     db.sequelize = sequelize;
     db.users = User(sequelize, DataTypes, Model);
+    db.products = Product(sequelize, DataTypes, Model);
 
     return db;
 }
