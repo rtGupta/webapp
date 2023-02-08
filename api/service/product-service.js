@@ -37,6 +37,7 @@ export const getProduct = async (productId) => {
     return data;
   } catch (err) {
     console.log(err);
+    throw new Error(err);
   }
 };
 
@@ -52,6 +53,23 @@ export const updateProduct = async (product) => {
       },
       returning: true,
       plain: true,
+    });
+    return data;
+  } catch (err) {
+    console.log(err);
+    throw new Error(err);
+  }
+};
+
+export const deleteProduct = async (id) => {
+  const db = connect();
+
+  let data = {};
+  try {
+    data = await db.products.destroy({
+      where: {
+        id,
+      },
     });
     return data;
   } catch (err) {
