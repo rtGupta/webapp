@@ -7,7 +7,8 @@ router.route("/product").post(productController.post);
 
 router.route("/product/:id")
             .get(productController.get)
-            .put(productController.update)
-            .delete(productController.deleteUser);
+            .put(productController.updateProduct)
+            .delete(productController.deleteProduct)
+            .patch(productController.update);
 
 export default router;
