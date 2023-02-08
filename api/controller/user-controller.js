@@ -76,8 +76,8 @@ export const post = async (request, response) => {
   const password = request.body.password;
 
   if (
-    !request.body.firstName ||
-    !request.body.lastName ||
+    !request.body.first_name ||
+    !request.body.last_name ||
     !email ||
     !password
   ) {
@@ -86,9 +86,9 @@ export const post = async (request, response) => {
       message: "A required field is empty.",
     });
   } else if (
-    "updatedAt" in request.body ||
+    "account_created" in request.body ||
     "id" in request.body ||
-    "createdAt" in request.body
+    "account_updated" in request.body
   ) {
     response.status(400).json({
       message: "Bad Request",
@@ -97,8 +97,8 @@ export const post = async (request, response) => {
     if (emailValidator.validate(email) && schema.validate(password)) {
       try {
         const payload = {
-          firstName: request.body.firstName,
-          lastName: request.body.lastName,
+          first_name: request.body.first_name,
+          last_name: request.body.last_name,
           username: request.body.username,
           password: request.body.password,
         };
@@ -145,11 +145,11 @@ export const get = async (request, response) => {
         }
         const resData = {
           id: user.id,
-          firstName: user.firstName,
-          lastName: user.lastName,
+          first_name: user.first_name,
+          last_name: user.last_name,
           username: user.username,
-          account_created: user.createdAt,
-          account_updated: user.updatedAt,
+          account_created: user.account_created,
+          account_updated: user.account_updated,
         };
 
         response.status(200).json(resData);
@@ -163,6 +163,13 @@ export const get = async (request, response) => {
 export const update = async (request, response) => {
   try {
     const id = request.params.id;
+    
+    if (JSON.stringify(request.body) == '{}') {
+      response.status(400).send({
+        message: "None of the fields have been updated."
+      });
+      return;
+    }
 
     const result = await getAuthorizedUser(request, response);
     if (result.message) {
@@ -176,10 +183,10 @@ export const update = async (request, response) => {
         });
       } else {
         if (
-          "updatedAt" in request.body ||
+          "account_updated" in request.body ||
           "username" in request.body ||
           "id" in request.body ||
-          "createdAt" in request.body
+          "account_created" in request.body
         ) {
           response.status(400).json({
             message: "Bad Request",
@@ -188,8 +195,8 @@ export const update = async (request, response) => {
         }
         const updated = {
           ...request.body,
-          createdAt: result.createdAt,
-          updatedAt: result.updatedAt,
+          account_created: result.account_created,
+          account_updated: result.account_updated,
         };
         updated.id = id;
         if (updated.password) {
@@ -206,11 +213,11 @@ export const update = async (request, response) => {
         const data = await userService.updateUser(updated);
         const updatedUserObj = {
           id: data[1].id,
-          firstName: data[1].firstName,
-          lastName: data[1].lastName,
+          first_name: data[1].first_name,
+          last_name: data[1].last_name,
           username: data[1].username,
-          account_created: data[1].createdAt,
-          account_updated: data[1].updatedAt,
+          account_created: data[1].account_created,
+          account_updated: data[1].account_updated,
         };
 
         response.status(204).json(updatedUserObj);

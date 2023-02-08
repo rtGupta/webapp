@@ -13,11 +13,11 @@ export const createUser = async (user) => {
 
     return {
       id: data.id,
-      firstName: data.firstName,
-      lastName: data.lastName,
+      first_name: data.first_name,
+      last_name: data.last_name,
       username: data.username,
-      account_created: data.createdAt,
-      account_updated: data.updatedAt,
+      account_created: data.account_created,
+      account_updated: data.account_updated,
     };
   } catch (err) {
     console.log("Error: " + err);
