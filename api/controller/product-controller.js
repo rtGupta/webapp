@@ -80,7 +80,7 @@ export const get = async (request, response) => {
 
 export const update = async (request, response) => {
   const productId = request.params.id;
-  
+
   try {
     const result = await getAuthorizedUser(request, response);
     if (result.message) {
@@ -140,6 +140,53 @@ export const update = async (request, response) => {
         message: "A product with the same sku already exists!",
       });
     } else if (error.message.includes("SequelizeValidationError")) {
+      response.status(400).send({
+        message: error.message,
+      });
+    } else {
+      setErrorResponse(error, response);
+    }
+  }
+};
+
+export const deleteUser = async (request, response) => {
+  const productId = request.params.id;
+
+  if (isNaN(productId)) {
+    response.status(400).send({
+      message: "Invalid Product ID"
+    });
+    return;
+  }
+
+  try {
+    const result = await getAuthorizedUser(request, response);
+    if (result.message) {
+      response.status(401).json({
+        message: result.message,
+      });
+    } else {
+      const product = await productService.getProduct(productId);
+
+      if (!product) {
+        response.status(404).send({
+          message: "Product not found!",
+        });
+        return;
+      }
+
+      if (product.owner_user_id != result.id) {
+        response.status(403).send({
+          message: "Forbidden",
+        });
+        return;
+      } else {
+        const res = await productService.deleteProduct(productId);
+        setSuccessResponse(res, response);
+      }
+    }
+  } catch (error) {
+    if (error.message.includes("SequelizeValidationError")) {
       response.status(400).send({
         message: error.message,
       });
