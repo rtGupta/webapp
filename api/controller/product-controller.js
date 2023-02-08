@@ -105,7 +105,8 @@ export const update = async (request, response) => {
         if (
           "date_added" in request.body ||
           "id" in request.body ||
-          "date_last_updated" in request.body
+          "date_last_updated" in request.body ||
+          "owner_user_id" in request.body
         ) {
           response.status(400).json({
             message: "Bad Request",
@@ -149,12 +150,28 @@ export const update = async (request, response) => {
   }
 };
 
-export const deleteUser = async (request, response) => {
+export const updateProduct = async (request, response) => {
+  if (
+    !("name" in request.body) ||
+    !("description" in request.body) ||
+    !("sku" in request.body) ||
+    !("quantity" in request.body) ||
+    !("manufacturer" in request.body)
+  ) {
+    response.status(400).json({
+      message: "Bad Request",
+    });
+    return;
+  }
+  update(request, response);
+};
+
+export const deleteProduct = async (request, response) => {
   const productId = request.params.id;
 
   if (isNaN(productId)) {
     response.status(400).send({
-      message: "Invalid Product ID"
+      message: "Invalid Product ID",
     });
     return;
   }
