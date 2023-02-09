@@ -26,7 +26,8 @@ const Product = (sequelize, DataTypes, Model) => {
           type: DataTypes.INTEGER,
           validate: {
             isInt: true,
-            min: 0
+            min: 0,
+            max: 100
           }
         },
         owner_user_id: {

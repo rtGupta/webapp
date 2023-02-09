@@ -38,6 +38,12 @@ export const post = async (request, response) => {
         message: "Bad Request",
       });
     } else {
+      if (request.body.quantity && typeof request.body.quantity != "number") {
+        response.status(400).json({
+          message: "Quantity should be an integer value.",
+        });
+        return;
+      }
       const result = await getAuthorizedUser(request, response);
       if (result.message) {
         response.status(401).json({
@@ -72,6 +78,13 @@ export const post = async (request, response) => {
 export const get = async (request, response) => {
   const productId = request.params.id;
 
+  if (isNaN(productId)) {
+    response.status(400).send({
+      message: "Invalid Product ID",
+    });
+    return;
+  }
+
   try {
     const product = await productService.getProduct(productId);
 
@@ -81,7 +94,20 @@ export const get = async (request, response) => {
       });
       return;
     }
-    response.status(200).send(product);
+
+    const productData = {
+      id: product.id,
+      name: product.name,
+      description: product.description,
+      sku: product.sku,
+      manufacturer: product.manufacturer,
+      quantity: product.quantity,
+      owner_user_id: product.owner_user_id,
+      date_added: product.date_added,
+      date_last_updated: product.date_last_updated,
+    };
+
+    response.status(200).send(productData);
   } catch (error) {
     setErrorResponse(error, response);
   }
@@ -90,7 +116,29 @@ export const get = async (request, response) => {
 export const update = async (request, response) => {
   const productId = request.params.id;
 
+  if (isNaN(productId)) {
+    response.status(400).send({
+      message: "Invalid Product ID",
+    });
+    return;
+  }
+
+  for (let key in request.body) {
+    if (request.body[key] == null) {
+      response.status(400).send({
+        message: "Bad Request"
+      });
+      return;
+    }
+  }
+
   try {
+    if (request.body.quantity && typeof request.body.quantity != "number") {
+      response.status(400).json({
+        message: "Quantity should be an integer value.",
+      });
+      return;
+    }
     const result = await getAuthorizedUser(request, response);
     if (result.message) {
       response.status(401).json({
@@ -161,14 +209,15 @@ export const update = async (request, response) => {
 
 export const updateProduct = async (request, response) => {
   if (
-    !("name" in request.body) ||
-    !("description" in request.body) ||
-    !("sku" in request.body) ||
-    !("quantity" in request.body) ||
-    !("manufacturer" in request.body)
+    !request.body.name ||
+    !request.body.description ||
+    !request.body.sku ||
+    !request.body.manufacturer ||
+    !request.body.quantity
   ) {
-    response.status(400).json({
-      message: "Bad Request",
+    response.status(400);
+    response.json({
+      message: "A required field is empty.",
     });
     return;
   }
