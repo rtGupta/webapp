@@ -1,4 +1,4 @@
-# INFO-6225-Cloud-Assignment-01
+# INFO-6225-Cloud-Assignments
 
 ### Aarti Gupta - 002193082
 
@@ -20,9 +20,9 @@ Create a web application using a technology stack that meets Cloud-Native Web Ap
     PORT=5432
    ```
 
-3. Run `db-migrate` commands to setup your database tables and schemas using following command - `npx sequelize-cli db:migrate`
+3. Install Dependencies using `npm install` command
 
-4. Install Dependencies using `npm install` command
+4. Run `db-migrate` commands to setup your database tables and schemas using following command - `npx sequelize-cli db:migrate`
 
 5. Run the app using command `npm start`.
 
