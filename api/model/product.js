@@ -26,13 +26,13 @@ const Product = (sequelize, DataTypes, Model) => {
           type: DataTypes.INTEGER,
           validate: {
             isInt: true,
-            min: 0,
-            max: 100
+            min: 0
           }
         },
         owner_user_id: {
           type: DataTypes.INTEGER,
-          readOnly: true
+          readOnly: true,
+          references: {model: 'Users', key: 'id'}
         },
         date_added: {
           type: DataTypes.DATE,

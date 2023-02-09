@@ -28,6 +28,15 @@ export const post = async (request, response) => {
       response.json({
         message,
       });
+    } else if (
+      "date_added" in request.body ||
+      "id" in request.body ||
+      "date_last_updated" in request.body ||
+      "owner_user_id" in request.body
+    ) {
+      response.status(400).json({
+        message: "Bad Request",
+      });
     } else {
       const result = await getAuthorizedUser(request, response);
       if (result.message) {
@@ -72,7 +81,7 @@ export const get = async (request, response) => {
       });
       return;
     }
-    setSuccessResponse(product, response);
+    response.status(200).send(product);
   } catch (error) {
     setErrorResponse(error, response);
   }
@@ -199,7 +208,7 @@ export const deleteProduct = async (request, response) => {
         return;
       } else {
         const res = await productService.deleteProduct(productId);
-        setSuccessResponse(res, response);
+        response.status(204).send();
       }
     }
   } catch (error) {

@@ -27,13 +27,13 @@ module.exports = {
         type: Sequelize.INTEGER,
         validate: {
           isInt: true,
-          min: 0,
-          max: 100
+          min: 0
         }
       },
       owner_user_id: {
         type: Sequelize.INTEGER,
-        readOnly: true
+        readOnly: true,
+        references: { model: 'Users', key: 'id'}
       },
       date_added: {
         allowNull: false,
