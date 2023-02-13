@@ -12,7 +12,7 @@ describe("Test Suite", () => {
       .get("/healthz")
       .end((err, res) => {
         if (!err) {
-          expect(res.status).to.eql(400);
+          expect(res.status).to.eql(200);
           done();
         }
       });
