@@ -50,6 +50,14 @@ variable "ssh_username" {
   default = "ec2-user"
 }
 
+variable "file_sources_list" {
+  type = list(string)
+}
+
+variable "shell_source" {
+  type = string
+}
+
 variable "USER" {
   type    = string
   default = env("USER")
