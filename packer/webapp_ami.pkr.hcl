@@ -95,6 +95,6 @@ build {
   }
   
   provisioner "shell" {
-    script = "./env_setup.sh"
+    script = "./packer/env_setup.sh"
   }
 }
