@@ -50,7 +50,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: build-artifact
-          path: release
+          path: '.'
       
       - name: Packer init
         run: packer init './packer/'
