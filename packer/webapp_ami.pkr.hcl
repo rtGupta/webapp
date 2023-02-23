@@ -9,7 +9,7 @@ packer {
 
 variable "aws-region" {
 	type = string
-	default = "us-east-1"
+	default = env("aws-region")
 }
 
 variable "aws_profile" {
@@ -20,11 +20,13 @@ variable "aws_profile" {
 variable "aws-access-key-id" {
   type    = string
   description = "Packer IAM User Access Key"
+  default = env("aws-access-key-id")
 }
 
 variable "aws-secret-access-key" {
   type    = string
   description = "Packer IAM User Secret Key"
+  default = env("aws-secret-access-key")
 }
 
 variable "ami_users" {
