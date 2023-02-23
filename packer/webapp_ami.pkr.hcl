@@ -7,7 +7,7 @@ packer {
   }
 }
 
-variable "aws_region" {
+variable "aws-region" {
 	type = string
 	default = "us-east-1"
 }
@@ -17,12 +17,12 @@ variable "aws_profile" {
 	default = "packer"
 }
 
-variable "aws_access_key" {
+variable "aws-access-key-id" {
   type    = string
   description = "Packer IAM User Access Key"
 }
 
-variable "aws_secret_key" {
+variable "aws-secret-access-key" {
   type    = string
   description = "Packer IAM User Secret Key"
 }
@@ -55,8 +55,10 @@ variable "ssh_username" {
 }
 
 source "amazon-ebs" "my-ami-webapp" {
-  profile         = "${var.aws_profile}"
-  region          = "${var.aws_region}"
+  // profile         = "${var.aws_profile}"
+  access_key = "${var.aws-access-key-id}"
+  secret_key = "${var.aws-secret-access-key}"
+  region          = "${var.aws-region}"
   ami_name        = "csye6225_${formatdate("YYYY_MM_DD_hh_mm_ss", timestamp())}"
   ami_description = "CSYE6225 - Cloud - Assignment 04 - Amazon Linux 2 AMI"
   ami_users       = "${var.ami_users}"
