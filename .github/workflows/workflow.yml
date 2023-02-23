@@ -38,13 +38,13 @@ jobs:
         with:
           type: 'zip'
           filename: 'release.zip'
-          exclusions: '*.git* /*node_modules/* /*packer/*'
+          exclusions: '.git/* .github/* .gitignore /*node_modules/* /*packer/*'
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: build-artifact
-          path: '.'
+          name: release
+          path: release.zip
 
   build:
     runs-on: ubuntu-latest
@@ -62,7 +62,7 @@ jobs:
       - name: Download Artifacts
         uses: actions/download-artifact@v3
         with:
-          name: build-artifact
+          name: release
 
       - name: Packer init
         run: packer init './packer/'
