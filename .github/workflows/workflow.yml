@@ -8,13 +8,13 @@ on:
   pull_request:
     branches: [ "main" ]
 
-# env:
-#   HOST: ${{ secrets.POSTGRES_DB_HOST }}
-#   PORT: ${{ secrets.POSTGRES_DB_PORT }}
-#   DB: ${{ secrets.POSTGRES_DB }}
-#   USER: ${{ secrets.POSTGRES_USER }}
-#   PASSWORD: ${{ secrets.POSTGRES_DB_PASSWORD }}
-#   DIALECT: ${{ secrets.POSTGRES_DIALECT }}
+env:
+  HOST: ${{ secrets.POSTGRES_DB_HOST }}
+  PORT: ${{ secrets.POSTGRES_DB_PORT }}
+  DB: ${{ secrets.POSTGRES_DB }}
+  USER: ${{ secrets.POSTGRES_USER }}
+  PASSWORD: ${{ secrets.POSTGRES_DB_PASSWORD }}
+  DIALECT: ${{ secrets.POSTGRES_DIALECT }}
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -77,3 +77,30 @@ jobs:
 
       - name: Packer Validate
         run: packer validate './packer/'
+
+  packer_build:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+      
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      
+      - name: Download Artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: release
+
+      - name: Packer init
+        run: packer init './packer/'
+        
+      - name: Packer Build
+        run: packer build './packer/'
