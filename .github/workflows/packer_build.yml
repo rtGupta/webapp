@@ -1,0 +1,45 @@
+# This is a basic workflow to help you get started with Actions
+
+name: CI
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the "main" branch
+  pull_request:
+    types:
+      - closed
+    branches: [ "main" ]
+
+env:
+  HOST: ${{ secrets.POSTGRES_DB_HOST }}
+  PORT: ${{ secrets.POSTGRES_DB_PORT }}
+  DB: ${{ secrets.POSTGRES_DB }}
+  USER: ${{ secrets.POSTGRES_USER }}
+  PASSWORD: ${{ secrets.POSTGRES_DB_PASSWORD }}
+  DIALECT: ${{ secrets.POSTGRES_DIALECT }}
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  if_merged:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+      
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      
+      - name: Download Artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: release
+
+      - name: Packer Build
+        run: packer build './packer/'
