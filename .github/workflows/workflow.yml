@@ -30,8 +30,15 @@ jobs:
       - name: Run Tests
         run: npm test
       
-      - name: Build Artifacts
-        run: zip -r release.zip . -x ".git/*" ".github/*" ".gitignore" "node_modules/*" "packer/*"
+      # - name: Build Artifacts
+      #   run: zip -r release.zip . -x ".git/*" ".github/*" ".gitignore" "node_modules/*" "packer/*"
+
+      - name: Archive Release
+        uses: thedoctor0/zip-release@0.7.1
+        with:
+          type: 'zip'
+          filename: 'release.zip'
+          exclusions: '*.git* /*packer/*'
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
