@@ -43,8 +43,14 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      - name: Build artifacts
-        run: zip -r release.zip . -x ".git/*" ".github/*" ".gitignore" "node_modules/*" "packer/*"
+      - name: Build Artifacts
+        run: zip -r release.zip ./release -x ".git/*" ".github/*" ".gitignore" "node_modules/*" "packer/*"
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-artifact
+          path: release
       
       - name: Packer init
         run: packer init './packer/'
