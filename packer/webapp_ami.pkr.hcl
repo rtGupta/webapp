@@ -90,7 +90,7 @@ build {
   ]
   
   provisioner "file" {
-    sources = ["./packer/webapp.conf", "build-artifact.zip"]
+    sources = ["./packer/webapp.conf", "/home/runner/work/webapp/webapp/release.zip"]
     destination = "/tmp/"
   }
   
