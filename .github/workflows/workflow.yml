@@ -8,6 +8,14 @@ on:
   pull_request:
     branches: [ "main" ]
 
+# env:
+#   HOST: ${{ secrets.POSTGRES_DB_HOST }}
+#   PORT: ${{ secrets.POSTGRES_DB_PORT }}
+#   DB: ${{ secrets.POSTGRES_DB }}
+#   USER: ${{ secrets.POSTGRES_USER }}
+#   PASSWORD: ${{ secrets.POSTGRES_DB_PASSWORD }}
+#   DIALECT: ${{ secrets.POSTGRES_DIALECT }}
+
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
@@ -29,16 +37,13 @@ jobs:
 
       - name: Run Tests
         run: npm test
-      
-      # - name: Build Artifacts
-      #   run: zip -r release.zip . -x ".git/*" ".github/*" ".gitignore" "node_modules/*" "packer/*"
 
       - name: Archive Release
         uses: thedoctor0/zip-release@0.7.1
         with:
           type: 'zip'
           filename: 'release.zip'
-          exclusions: '.git/* .github/* .gitignore /*node_modules/* /*packer/*'
+          exclusions: '*.git* /*node_modules/* /*packer/*'
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
@@ -67,23 +72,8 @@ jobs:
       - name: Packer init
         run: packer init './packer/'
 
+      - name: Packer format
+        run: packer fmt './packer/'
+
       - name: Packer Validate
         run: packer validate './packer/'
-
-      - name: Packer Build
-        run: packer build './packer/'
-
-      # - name: Packer build
-      #   uses: ExitoLab/packer_build_action_aws@v0.2.10
-      #   with:
-      #     templateFile: 'webapp_ami.pkr.hcl'
-      #     workingDir: 'packer'
-      #     # varFile: 'variables.json'
-      #   env:
-      #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      #     AWS_DEFAULT_REGION: us-east-1
-      # - name: Switch to Release Folder
-      #   run: |
-      #     cd release
-      #     ls -la
