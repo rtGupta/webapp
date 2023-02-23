@@ -44,7 +44,7 @@ jobs:
           aws-region: us-east-1
 
       - name: Build Artifacts
-        run: zip -r release.zip /release/ -x ".git/*" ".github/*" ".gitignore" "node_modules/*" "packer/*"
+        run: zip -r release.zip . -x ".git/*" ".github/*" ".gitignore" "node_modules/*" "packer/*"
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
