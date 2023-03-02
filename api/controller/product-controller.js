@@ -75,6 +75,47 @@ export const post = async (request, response) => {
   }
 };
 
+export const fetchProductByUser = async (request, response) => {
+  const productId = request.params.id;
+
+  if (isNaN(productId)) {
+    response.status(400).send({
+      message: "Invalid Product ID",
+    });
+    return;
+  }
+
+  try {
+    const result = await getAuthorizedUser(request, response);
+
+    if (result.message) {
+      return {
+        message: result.message,
+        status: 401
+      };
+    } else {
+      const product = await productService.getProduct(productId);
+      if (!product) {
+        return {
+          message: "Product not found!",
+          status: 404
+        };
+      } else if (product.owner_user_id != result.id) {
+        return {
+          message: "Forbidden",
+          status: 403
+        };
+      } else {
+        return {
+          product
+        };
+      }
+    }
+  } catch (error) {
+    throw new Error(error);
+  }
+};
+
 export const get = async (request, response) => {
   const productId = request.params.id;
 
@@ -126,7 +167,7 @@ export const update = async (request, response) => {
   for (let key in request.body) {
     if (request.body[key] == null) {
       response.status(400).send({
-        message: "Bad Request"
+        message: "Bad Request",
       });
       return;
     }

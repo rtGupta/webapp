@@ -6,5 +6,5 @@ ssh_username      = "ec2-user"
 device_name       = "/dev/xvda"
 volume_type       = "gp2"
 volume_size       = 8
-file_sources_list = ["./packer/webapp.conf", "./packer/pg_hba.conf", "/home/runner/work/webapp/webapp/release.zip"]
+file_sources_list = ["./packer/webapp.conf", "/home/runner/work/webapp/webapp/release.zip"]
 shell_source      = "./packer/env_setup.sh"
