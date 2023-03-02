@@ -2,7 +2,7 @@ import { getAuthorizedUser } from "./user-controller.js";
 import * as productService from "../service/product-service.js";
 
 import * as uploadService from "../service/upload-service.js";
-import * as s3 from "./s3.js";
+import { s3 } from "./s3.js";
 
 const deleteProductFromS3 = async (bucket, key) => {
   try {
@@ -324,7 +324,7 @@ export const deleteProduct = async (request, response) => {
       } else {
         const images = await (uploadService.getImagesByProduct(productId));
 
-        await (deleteProductFromS3(process.env.S3_BUCKET_NAME, `Product ${id}/`));
+        await (deleteProductFromS3(process.env.S3_BUCKET_NAME, `Product ${productId}/`));
         await Promise.all(images.map((image) => uploadService.deleteImage(image.id)));
         
         const res = await productService.deleteProduct(productId);
