@@ -38,10 +38,9 @@ export const getAuthorizedUser = async (request, response) => {
       !request.headers.authorization ||
       request.headers.authorization.indexOf("Basic ") === -1
     ) {
-      response.status(401).json({
+      return {
         message: "Missing Request Header: Authorization",
-      });
-      return;
+      };
     }
 
     // verify auth credentials
