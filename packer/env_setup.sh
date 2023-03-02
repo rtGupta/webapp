@@ -40,8 +40,7 @@ sudo systemctl start pm2-ec2-user
 sudo systemctl status pm2-ec2-user
 
 # Unzip the source code for webapp
-unzip /tmp/release.zip -d /home/ec2-user
-mv release webapp
+unzip /tmp/release.zip -d /home/ec2-user/webapp
 
 # Installing dependencies
 cd /home/ec2-user/webapp

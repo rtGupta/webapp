@@ -36,7 +36,15 @@ const uploadToS3 = async (key, buffer, mimetype) => {
         Key: key,
         Body: buffer,
       },
-      () => resolve()
+      (err, data) => {
+        if (err) {
+          console.log(err);
+          reject(err);
+        } else {
+          console.log(data);
+          resolve();
+        }
+      }
     );
   });
 };
