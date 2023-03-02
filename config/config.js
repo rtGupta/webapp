@@ -10,5 +10,5 @@ export default {
   database: process.env.DB,
   username: process.env.USER,
   password: process.env.PASSWORD,
-  dialect: process.env.DIALECT
+  dialect: 'postgres'
 };
