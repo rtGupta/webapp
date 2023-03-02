@@ -1,6 +1,31 @@
 import { getAuthorizedUser } from "./user-controller.js";
 import * as productService from "../service/product-service.js";
 
+import * as uploadService from "../service/upload-service.js";
+import * as s3 from "./s3.js";
+
+const deleteProductFromS3 = async (bucket, key) => {
+  try {
+    const listParams = {
+      Bucket: bucket,
+      Prefix: key,
+    };
+    const listedObjects = await s3.listObjectsV2(listParams).promise();
+    const deleteParams = {
+      Bucket: bucket,
+      Delete: { Objects: [] },
+    };
+    listedObjects.Contents.forEach(({ Key }) => {
+      deleteParams.Delete.Objects.push({ Key });
+    });
+    await s3.deleteObjects(deleteParams).promise();
+    return true;
+  } catch (err) {
+    console.error(err);
+    return false;
+  }
+};
+
 const setErrorResponse = (error, response) => {
   response.status(500);
   response.json(error);
@@ -91,23 +116,23 @@ export const fetchProductByUser = async (request, response) => {
     if (result.message) {
       return {
         message: result.message,
-        status: 401
+        status: 401,
       };
     } else {
       const product = await productService.getProduct(productId);
       if (!product) {
         return {
           message: "Product not found!",
-          status: 404
+          status: 404,
         };
       } else if (product.owner_user_id != result.id) {
         return {
           message: "Forbidden",
-          status: 403
+          status: 403,
         };
       } else {
         return {
-          product
+          product,
         };
       }
     }
@@ -297,6 +322,11 @@ export const deleteProduct = async (request, response) => {
         });
         return;
       } else {
+        const images = await (uploadService.getImagesByProduct(productId));
+
+        await (deleteProductFromS3(process.env.S3_BUCKET_NAME, `Product ${id}/`));
+        await Promise.all(images.map((image) => uploadService.deleteImage(image.id)));
+        
         const res = await productService.deleteProduct(productId);
         response.status(204).send();
       }

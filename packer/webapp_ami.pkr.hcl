@@ -47,7 +47,6 @@ build {
   }
 
   provisioner "shell" {
-    script           = var.shell_source
-    environment_vars = ["USER=${var.USER}", "PASSWORD=${var.PASSWORD}", "HOST=${var.HOST}", "PORT=${var.PORT}", "DB=${var.DB}", "DIALECT=${var.DIALECT}"]
+    script = var.shell_source
   }
 }

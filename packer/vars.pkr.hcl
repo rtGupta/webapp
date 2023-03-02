@@ -57,33 +57,3 @@ variable "file_sources_list" {
 variable "shell_source" {
   type = string
 }
-
-variable "USER" {
-  type    = string
-  default = env("USER")
-}
-
-variable "PASSWORD" {
-  type    = string
-  default = env("USER")
-}
-
-variable "HOST" {
-  type    = string
-  default = env("HOST")
-}
-
-variable "PORT" {
-  type    = string
-  default = env("PORT")
-}
-
-variable "DB" {
-  type    = string
-  default = env("DB")
-}
-
-variable "DIALECT" {
-  type    = string
-  default = "postgres"
-}

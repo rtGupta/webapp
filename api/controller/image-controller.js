@@ -1,16 +1,18 @@
 import multer from "multer";
-import aws from "aws-sdk";
+// import aws from "aws-sdk";
 import { v4 as uuidv4 } from "uuid";
 
 import * as productController from "../controller/product-controller.js";
 import * as uploadService from "../service/upload-service.js";
 
+import * as s3 from "./s3.js";
+
 const storage = multer.memoryStorage();
 
-const s3 = new aws.S3({
-  signatureVersion: "v4",
-  region: "us-east-1"
-});
+// const s3 = new aws.S3({
+//   signatureVersion: "v4",
+//   region: "us-east-1"
+// });
 
 const S3_BUCKET = process.env.S3_BUCKET_NAME;
 
