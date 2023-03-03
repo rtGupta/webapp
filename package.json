@@ -5,7 +5,7 @@
   "main": "server.js",
   "type": "module",
   "scripts": {
-    "start": "source ~/.bash_profile; sequelize db:migrate; nodemon server.js",
+    "start": "sequelize db:migrate; nodemon server.js",
     "test": "mocha --exit"
   },
   "author": "Aarti Gupta",
