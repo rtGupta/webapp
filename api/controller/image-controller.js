@@ -5,11 +5,12 @@ import { v4 as uuidv4 } from "uuid";
 import * as productController from "../controller/product-controller.js";
 import * as uploadService from "../service/upload-service.js";
 
+import Config from "../../config/config.js";
 import { s3 } from "./s3.js";
 
 const storage = multer.memoryStorage();
 
-const S3_BUCKET = process.env.S3_BUCKET_NAME;
+const S3_BUCKET = Config.s3bucketName;
 
 const multerFilter = (req, file, cb) => {
   if (!file.originalname.match(/\.(png|jpg|jpeg)$/)) {

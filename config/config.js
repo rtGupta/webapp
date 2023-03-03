@@ -10,5 +10,7 @@ export default {
   database: process.env.DB,
   username: process.env.USER,
   password: process.env.PASSWORD,
-  dialect: 'postgres'
+  dialect: process.env.DIALECT,
+  regionS3: process.env.AWS_S3_REGION,
+  s3bucketName: process.env.S3_BUCKET_NAME
 };
