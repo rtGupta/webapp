@@ -36,4 +36,5 @@ Create a web application using a technology stack that meets Cloud-Native Web Ap
 8. To run the workflow manually, click on `Actions` tab under your fork repo name.
 9. In the left sidebar menu, select the `workflow` you want to run.
 10. From the list of workflow runs, select the name of the `run` you want to run.
-11. Under `Jobs` , click the `Explore-GitHub-Actions` job. 
+11. Under `Jobs` , click the `Explore-GitHub-Actions` job.
+
