@@ -55,14 +55,15 @@ export const getImageById = async (imageId) => {
   }
 };
 
-export const deleteImage = async (imageId) => {
+export const deleteImage = async (imageId, productId) => {
   const db = connect();
 
   let data = {};
   try {
     data = await db.images.destroy({
       where: {
-        id: imageId
+        id: imageId,
+        product_id: productId
       },
     });
     return data;

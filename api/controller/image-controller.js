@@ -206,7 +206,13 @@ export const getImage = async (request, response) => {
       response.status(result.status).send(result);
       return;
     } else {
-      setSuccessResponse(result.image, response);
+      if (result.image.product_id != request.params.id) {
+        response.status(403).send({
+          message: "The image doesn't belong to the product."
+        });
+      } else {
+        setSuccessResponse(result.image, response);
+      }
     }
   } catch (error) {
     setErrorResponse(error, response);
@@ -224,8 +230,14 @@ export const deleteImage = async (request, response) => {
         S3_BUCKET,
         `Product ${result.product.id}/images/${result.image.image_id}`
       );
-      const res = await uploadService.deleteImage(request.params.imageId);
-      response.status(204).send();
+      const res = await uploadService.deleteImage(request.params.imageId, result.product.id);
+      if (!res) {
+        response.status(403).send({
+          message: "The image doesn't belong to the product."
+        });
+      } else {
+        response.status(204).send();
+      }
     }
   } catch (error) {
     setErrorResponse(error, response);
