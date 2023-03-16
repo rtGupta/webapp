@@ -8,7 +8,7 @@ export default {
   host: process.env.HOST,
   port: process.env.PORT,
   database: process.env.DB,
-  username: process.env.USER,
+  username: process.env.DB_USER,
   password: process.env.PASSWORD,
   dialect: process.env.DIALECT,
   regionS3: process.env.AWS_S3_REGION,

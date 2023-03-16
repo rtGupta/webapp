@@ -1,5 +1,4 @@
 import multer from "multer";
-// import aws from "aws-sdk";
 import { v4 as uuidv4 } from "uuid";
 
 import * as productController from "../controller/product-controller.js";
@@ -41,20 +40,21 @@ const uploadToS3 = async (key, buffer, mimetype) => {
 
 const deleteS3Object = async (bucket, key) => {
   return new Promise((resolve, reject) => {
-    s3.deleteObject({
-      Bucket: bucket,
-      Key: key
-    }, (err, data) => {
-      if (err) {
-        console.log(err);
-        reject(err);
-      } else {
-        console.log(data);
-        resolve();
+    s3.deleteObject(
+      {
+        Bucket: bucket,
+        Key: key,
+      },
+      (err, data) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
       }
-    })
-  })
-}
+    );
+  });
+};
 
 const getSignedURL = (bucket, key, expires = 3600) => {
   return new Promise((resolve, reject) => {
@@ -106,8 +106,15 @@ export const uploadImage = async (request, response) => {
       }
 
       const imageId = uuidv4();
-      await uploadToS3(`Product ${result.product.id}/images/${imageId}`, request.file.buffer, request.file.mimetype);
-      const s3_image_url = await getSignedURL(S3_BUCKET, `Product ${result.product.id}/images/${imageId}`);
+      await uploadToS3(
+        `Product ${result.product.id}/images/${imageId}`,
+        request.file.buffer,
+        request.file.mimetype
+      );
+      const s3_image_url = await getSignedURL(
+        S3_BUCKET,
+        `Product ${result.product.id}/images/${imageId}`
+      );
 
       const payload = {
         file_name: request.body.file,
@@ -119,7 +126,6 @@ export const uploadImage = async (request, response) => {
       setSuccessResponse(data, response);
     }
   } catch (error) {
-    console.log(error);
     setErrorResponse(error, response);
   }
 };
@@ -155,38 +161,73 @@ export const getImagesList = async (request, response) => {
   }
 };
 
-export const deleteImage = async (request, response) => {
+export const fetchImageByID = async (request, response) => {
   const productId = request.params.id;
   const imageId = request.params.imageId;
 
   if (!productId || !imageId) {
     response.status(400).send({
-      message: "Bad Request"
+      message: "Bad Request",
     });
+    return;
   } else {
     try {
       const result = await productController.fetchProductByUser(
         request,
         response
       );
-  
+
       if (!result.product) {
-        response.status(result.status).send(result);
-        return;
+        return result;
       } else {
         const image = await uploadService.getImageById(imageId);
         if (!image) {
-          response.status(404).send({
-            message: "Image not found!"
-          });
+          return {
+            message: "Image not found!",
+            status: 404,
+          };
         } else {
-          await deleteS3Object(S3_BUCKET, `Product ${result.product.id}/images/${image.image_id}`);
-          const res = await uploadService.deleteImage(imageId);
-          response.status(204).send();
+          return {
+            product: result.product,
+            image,
+          };
         }
       }
     } catch (error) {
-      setErrorResponse(error, response);
+      throw new Error(error);
     }
   }
-}
+};
+
+export const getImage = async (request, response) => {
+  try {
+    const result = await fetchImageByID(request, response);
+    if (!result.image) {
+      response.status(result.status).send(result);
+      return;
+    } else {
+      setSuccessResponse(result.image, response);
+    }
+  } catch (error) {
+    setErrorResponse(error, response);
+  }
+};
+
+export const deleteImage = async (request, response) => {
+  try {
+    const result = await fetchImageByID(request, response);
+    if (!result.image) {
+      response.status(result.status).send(result);
+      return;
+    } else {
+      await deleteS3Object(
+        S3_BUCKET,
+        `Product ${result.product.id}/images/${result.image.image_id}`
+      );
+      const res = await uploadService.deleteImage(request.params.imageId);
+      response.status(204).send();
+    }
+  } catch (error) {
+    setErrorResponse(error, response);
+  }
+};
