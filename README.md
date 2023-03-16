@@ -37,4 +37,3 @@ Create a web application using a technology stack that meets Cloud-Native Web Ap
 9. In the left sidebar menu, select the `workflow` you want to run.
 10. From the list of workflow runs, select the name of the `run` you want to run.
 11. Under `Jobs` , click the `Explore-GitHub-Actions` job.
-

@@ -17,6 +17,7 @@ router.route("/product/:id/image")
             .get(imageController.getImagesList);
 
 router.route("/product/:id/image/:imageId")
+            .get(imageController.getImage)
             .delete(imageController.deleteImage);
 
 export default router;
