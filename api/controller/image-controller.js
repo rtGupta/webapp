@@ -207,8 +207,8 @@ export const getImage = async (request, response) => {
       return;
     } else {
       if (result.image.product_id != request.params.id) {
-        response.status(403).send({
-          message: "The image doesn't belong to the product."
+        response.status(404).send({
+          message: "The image doesn't exist for the product."
         });
       } else {
         setSuccessResponse(result.image, response);
@@ -232,8 +232,8 @@ export const deleteImage = async (request, response) => {
       );
       const res = await uploadService.deleteImage(request.params.imageId, result.product.id);
       if (!res) {
-        response.status(403).send({
-          message: "The image doesn't belong to the product."
+        response.status(404).send({
+          message: "The image doesn't exist for the given product."
         });
       } else {
         response.status(204).send();
