@@ -326,7 +326,7 @@ export const deleteProduct = async (request, response) => {
         const images = await (uploadService.getImagesByProduct(productId));
 
         await (deleteProductFromS3(Config.s3bucketName, `Product ${productId}/`));
-        await Promise.all(images.map((image) => uploadService.deleteImage(image.id)));
+        await Promise.all(images.map((image) => uploadService.deleteImage(image.id, productId)));
         
         const res = await productService.deleteProduct(productId);
         response.status(204).send();
