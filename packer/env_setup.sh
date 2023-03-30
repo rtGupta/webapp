@@ -43,8 +43,7 @@ sudo systemctl status pm2-ec2-user
 sudo mv /tmp/cloudwatch_config.json /opt/cloudwatch_config.json
 
 # Unzip the source code for webapp
-unzip /tmp/release.zip -d /home/ec2-user/
-mv /home/ec2-user/release/ /home/ec2-user/webapp/
+unzip /tmp/release.zip -d /home/ec2-user/webapp
 
 # Installing dependencies
 cd /home/ec2-user/webapp
