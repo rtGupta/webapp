@@ -3,6 +3,8 @@ import passwordValidator from "password-validator";
 import bcrypt from "bcrypt";
 
 import * as userService from "../service/user-service.js";
+import { client } from "../../util/statsd_client.js";
+import logger from "../../util/logger.js";
 
 // Create a schema
 const schema = new passwordValidator();
@@ -21,14 +23,27 @@ schema
   .not()
   .spaces();
 
-const setErrorResponse = (error, response) => {
+const setErrorResponse = (error, request, response) => {
   response.status(500);
   response.json(error);
+  logger.error(
+    `${error.status || 500} - ${response.statusMessage} - ${error.message} - ${
+      request.originalUrl
+    } - ${request.method} - ${request.ip}`
+  )
 };
 
 const setSuccessResponse = (obj, response) => {
   response.status(201);
   response.json(obj);
+};
+
+const sendErrorResponse = (obj, response) => {
+  response.status(obj.errorCode);
+  response.json({
+    message: obj.message
+  });
+  logger.error(`${obj.errorCode} - ${response.statusMessage} - ${obj.message}`);
 };
 
 export const getAuthorizedUser = async (request, response) => {
@@ -71,6 +86,7 @@ export const getAuthorizedUser = async (request, response) => {
 };
 
 export const post = async (request, response) => {
+  client.increment("endpoint.createUser.http.post");
   const email = request.body.username;
   const password = request.body.password;
 
@@ -80,18 +96,28 @@ export const post = async (request, response) => {
     !email ||
     !password
   ) {
-    response.status(400);
-    response.json({
-      message: "A required field is empty.",
-    });
+    const err = {
+      errorCode: 400,
+      message: "A required field is empty"
+    };
+    // response.status(400);
+    // response.json({
+      // message: "A required field is empty.",
+    // });
+    sendErrorResponse(err, response);
   } else if (
     "account_created" in request.body ||
     "id" in request.body ||
     "account_updated" in request.body
   ) {
-    response.status(400).json({
-      message: "Bad Request",
-    });
+    const err = {
+      errorCode: 400,
+      message: "Bad Request"
+    }
+    sendErrorResponse(err, response);
+    // response.status(400).json({
+    //   message: "Bad Request",
+    // });
   } else {
     if (emailValidator.validate(email) && schema.validate(password)) {
       try {
@@ -103,43 +129,70 @@ export const post = async (request, response) => {
         };
         const user = await userService.createUser(payload);
         setSuccessResponse(user, response);
+        logger.info(`User Created Successfully! ${user.username}`);
       } catch (error) {
         if (error.message.includes("SequelizeUniqueConstraintError")) {
-          response.status(400);
-          response.json({
-            message: "A user account with the email address already exists",
-          });
-        } else setErrorResponse(error, response);
+          const err = {
+            errorCode: 400,
+            message: "A user account with the email address already exists"
+          };
+          sendErrorResponse(err, response);
+          // response.status(400);
+          // response.json({
+          //   message: "A user account with the email address already exists",
+          // });
+        } else setErrorResponse(error, request, response);
       }
     } else {
-      response.status(400);
-      response.json({
-        message: "Invalid Email or password.",
-      });
+      const err = {
+        errorCode: 400,
+        message: "Invalid Email or password."
+      };
+      sendErrorResponse(err, response);
+      // response.status(400);
+      // response.json({
+      //   message: "Invalid Email or password.",
+      // });
     }
   }
 };
 
 export const get = async (request, response) => {
+  client.increment("endpoint.fetchUser.http.get");
   try {
     const id = request.params.id;
 
     const result = await getAuthorizedUser(request, response);
     if (result.message) {
-      response.status(401).json({
-        message: result.message,
-      });
+      const err = {
+        errorCode: 401,
+        message: result.message
+      };
+      sendErrorResponse(err, response);
+      // response.status(401).json({
+      //   message: result.message,
+      // });
     } else {
       if (result.id != id) {
-        response.status(403).json({
-          message: "Forbidden",
-        });
+        const err = {
+          errorCode: 403,
+          message: "Forbidden"
+        };
+        sendErrorResponse(err, response);
+        // response.status(403).json({
+        //   message: "Forbidden",
+        // });
       } else {
         const user = await userService.getUser(id);
         if (!user) {
-          response.status(401).json({
-            message: "Oops! Unauthorized Access",
-          });
+          const err = {
+            errorCode: 401,
+            message: "Oops! Unauthorized Access"
+          };
+          sendErrorResponse(err, response);
+          // response.status(401).json({
+          //   message: "Oops! Unauthorized Access",
+          // });
           return;
         }
         const resData = {
@@ -155,31 +208,47 @@ export const get = async (request, response) => {
       }
     }
   } catch (error) {
-    setErrorResponse(error, response);
+    setErrorResponse(error, request, response);
   }
 };
 
 export const update = async (request, response) => {
+  client.increment("endpoint.updateUser.http.put");
   try {
     const id = request.params.id;
     
     if (JSON.stringify(request.body) == '{}') {
-      response.status(400).send({
+      const err = {
+        errorCode: 400,
         message: "None of the fields have been updated."
-      });
+      };
+      sendErrorResponse(err, response);
+      // response.status(400).send({
+      //   message: "None of the fields have been updated."
+      // });
       return;
     }
 
     const result = await getAuthorizedUser(request, response);
     if (result.message) {
-      response.status(401).json({
-        message: result.message,
-      });
+      const err = {
+        errorCode: 401,
+        message: result.message
+      };
+      sendErrorResponse(err, response);
+      // response.status(401).json({
+      //   message: result.message,
+      // });
     } else {
       if (result.id != id) {
-        response.status(403).json({
-          message: "Forbidden",
-        });
+        const err = {
+          errorCode: 403,
+          message: "Forbidden"
+        };
+        sendErrorResponse(err, response);
+        // response.status(403).json({
+        //   message: "Forbidden",
+        // });
       } else {
         if (
           "account_updated" in request.body ||
@@ -187,9 +256,14 @@ export const update = async (request, response) => {
           "id" in request.body ||
           "account_created" in request.body
         ) {
-          response.status(400).json({
-            message: "Bad Request",
-          });
+          const err = {
+            errorCode: 400,
+            message: "Bad Request"
+          }
+          sendErrorResponse(err, response);
+          // response.status(400).json({
+          //   message: "Bad Request",
+          // });
           return;
         }
         const updated = {
@@ -203,9 +277,14 @@ export const update = async (request, response) => {
             const newEncryptedPwd = await bcrypt.hash(updated.password, 10);
             updated.password = newEncryptedPwd;
           } else {
-            response.status(401).send({
-              message: "Invalid Password!",
-            });
+            const err = {
+              errorCode: 401,
+              message: "Invalid Password!"
+            }
+            sendErrorResponse(err, response);
+            // response.status(401).send({
+            //   message: "Invalid Password!",
+            // });
             return;
           }
         }
@@ -220,11 +299,12 @@ export const update = async (request, response) => {
         };
 
         response.status(204).json(updatedUserObj);
+        logger.info(`User ${user.username} was updated successfully!`);
         return;
       }
     }
   } catch (error) {
     console.log(error);
-    setErrorResponse(error, response);
+    setErrorResponse(error, request, response);
   }
 };

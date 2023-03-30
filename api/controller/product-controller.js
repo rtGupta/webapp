@@ -1,9 +1,11 @@
-import { getAuthorizedUser } from "./user-controller.js";
 import * as productService from "../service/product-service.js";
-
 import * as uploadService from "../service/upload-service.js";
-import Config from "../../config/config.js";
+import { getAuthorizedUser } from "./user-controller.js";
+
 import { s3 } from "./s3.js";
+import { client } from "../../util/statsd_client.js";
+import Config from "../../config/config.js";
+import logger from "../../util/logger.js";
 
 const deleteProductFromS3 = async (bucket, key) => {
   try {
@@ -22,7 +24,7 @@ const deleteProductFromS3 = async (bucket, key) => {
     await s3.deleteObjects(deleteParams).promise();
     return true;
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     return false;
   }
 };
@@ -30,6 +32,11 @@ const deleteProductFromS3 = async (bucket, key) => {
 const setErrorResponse = (error, response) => {
   response.status(500);
   response.json(error);
+  logger.error(
+    `${error.status || 500} - ${response.statusMessage} - ${error.message} - ${
+      request.originalUrl
+    } - ${request.method} - ${request.ip}`
+  )
 };
 
 const setSuccessResponse = (obj, response) => {
@@ -37,7 +44,16 @@ const setSuccessResponse = (obj, response) => {
   response.json(obj);
 };
 
+const sendErrorResponse = (obj, response) => {
+  response.status(obj.errorCode);
+  response.json({
+    message: obj.message
+  });
+  logger.error(`${obj.errorCode} - ${response.statusMessage} - ${obj.message}`);
+};
+
 export const post = async (request, response) => {
+  client.increment("endpoint.createProduct.http.post");
   try {
     if (
       !request.body.name ||
@@ -50,31 +66,51 @@ export const post = async (request, response) => {
         request.body.quantity < 0
           ? "Quantity cannot be less than 0"
           : "A required field is missing";
-      response.status(400);
-      response.json({
-        message,
-      });
+      // response.status(400);
+      // response.json({
+      //   message,
+      // });
+      const err = {
+        errorCode: 400,
+        message: message
+      };
+      sendErrorResponse(err, response);
     } else if (
       "date_added" in request.body ||
       "id" in request.body ||
       "date_last_updated" in request.body ||
       "owner_user_id" in request.body
     ) {
-      response.status(400).json({
-        message: "Bad Request",
-      });
+      // response.status(400).json({
+      //   message: "Bad Request",
+      // });
+      const err = {
+        errorCode: 400,
+        message: "Bad Request"
+      };
+      sendErrorResponse(err, response);
     } else {
       if (request.body.quantity && typeof request.body.quantity != "number") {
-        response.status(400).json({
-          message: "Quantity should be an integer value.",
-        });
+        // response.status(400).json({
+        //   message: "Quantity should be an integer value.",
+        // });
+        const err = {
+          errorCode: 400,
+          message: "Quantity should be an integer value."
+        };
+        sendErrorResponse(err, message);
         return;
       }
       const result = await getAuthorizedUser(request, response);
       if (result.message) {
-        response.status(401).json({
-          message: result.message,
-        });
+        // response.status(401).json({
+        //   message: result.message,
+        // });
+        const err = {
+          errorCode: 401,
+          message: result.message
+        };
+        sendErrorResponse(err, response);
       } else {
         const payload = {
           ...request.body,
@@ -86,14 +122,24 @@ export const post = async (request, response) => {
     }
   } catch (error) {
     if (error.message.includes("SequelizeUniqueConstraintError")) {
-      response.status(400);
-      response.json({
-        message: "A product with the same sku already exists!",
-      });
+      // response.status(400);
+      // response.json({
+      //   message: "A product with the same sku already exists!",
+      // });
+      const err = {
+        errorCode: 400,
+        message: "A product with the same sku already exists!"
+      }
+      sendErrorResponse(err, response);
     } else if (error.message.includes("SequelizeValidationError")) {
-      response.status(400).send({
-        message: error.message,
-      });
+      // response.status(400).send({
+      //   message: error.message,
+      // });
+      const err = {
+        errorCode: 400,
+        message: error.message
+      };
+      sendErrorResponse(err, response);
     } else {
       console.log(error);
       setErrorResponse(error, response);
@@ -143,12 +189,18 @@ export const fetchProductByUser = async (request, response) => {
 };
 
 export const get = async (request, response) => {
+  client.increment("endpoint.fetchProduct.http.get");
   const productId = request.params.id;
 
   if (isNaN(productId)) {
-    response.status(400).send({
-      message: "Invalid Product ID",
-    });
+    // response.status(400).send({
+    //   message: "Invalid Product ID",
+    // });
+    const err = {
+      errorCode: 400,
+      message: "Invalid Product ID"
+    };
+    sendErrorResponse(err, response);
     return;
   }
 
@@ -156,9 +208,14 @@ export const get = async (request, response) => {
     const product = await productService.getProduct(productId);
 
     if (!product) {
-      response.status(404).send({
-        message: "Product not found!",
-      });
+      // response.status(404).send({
+      //   message: "Product not found!",
+      // });
+      const err = {
+        errorCode: 400,
+        message: "Product not found!"
+      };
+      sendErrorResponse(err, response);
       return;
     }
 
@@ -181,49 +238,80 @@ export const get = async (request, response) => {
 };
 
 export const update = async (request, response) => {
+  client.increment("endpoint.updateProduct.http.patch");
   const productId = request.params.id;
 
   if (isNaN(productId)) {
-    response.status(400).send({
-      message: "Invalid Product ID",
-    });
+    // response.status(400).send({
+    //   message: "Invalid Product ID",
+    // });
+    const err = {
+      errorCode: 400,
+      message: "Invalid Product ID"
+    };
+    sendErrorResponse(err, response);
     return;
   }
 
   for (let key in request.body) {
     if (request.body[key] == null) {
-      response.status(400).send({
-        message: "Bad Request",
-      });
+      // response.status(400).send({
+      //   message: "Bad Request",
+      // });
+      const err = {
+        errorCode: 400,
+        message: "Bad Request"
+      };
+      sendErrorResponse(err, response);
       return;
     }
   }
 
   try {
     if (request.body.quantity && typeof request.body.quantity != "number") {
-      response.status(400).json({
-        message: "Quantity should be an integer value.",
-      });
+      // response.status(400).json({
+      //   message: "Quantity should be an integer value.",
+      // });
+      const err = {
+        errorCode: 400,
+        message: "Quantity should be an integer value."
+      };
+      sendErrorResponse(err, message);
       return;
     }
     const result = await getAuthorizedUser(request, response);
     if (result.message) {
-      response.status(401).json({
-        message: result.message,
-      });
+      // response.status(401).json({
+      //   message: result.message,
+      // });
+      const err = {
+        errorCode: 401,
+        message: result.message
+      };
+      sendErrorResponse(err, response);
     } else {
       const product = await productService.getProduct(productId);
 
       if (!product) {
-        response.status(404).send({
-          message: "Product not found!",
-        });
+        // response.status(404).send({
+        //   message: "Product not found!",
+        // });
+        const err = {
+          errorCode: 404,
+          message: "Product not found!"
+        };
+        sendErrorResponse(err, response);
         return;
       }
       if (product.owner_user_id != result.id) {
-        response.status(403).send({
-          message: "Forbidden",
-        });
+        // response.status(403).send({
+        //   message: "Forbidden",
+        // });
+        const err = {
+          errorCode: 403,
+          message: "Forbidden"
+        };
+        sendErrorResponse(err, response);
         return;
       } else {
         if (
@@ -232,9 +320,14 @@ export const update = async (request, response) => {
           "date_last_updated" in request.body ||
           "owner_user_id" in request.body
         ) {
-          response.status(400).json({
-            message: "Bad Request",
-          });
+          // response.status(400).json({
+          //   message: "Bad Request",
+          // });
+          const err = {
+            errorCode: 400,
+            message: "Bad Request"
+          };
+          sendErrorResponse(err, response);
           return;
         }
         const payload = {
@@ -256,18 +349,29 @@ export const update = async (request, response) => {
           date_last_updated: updated[1].date_last_updated,
         };
         response.status(204).send(updatedProduct);
+        logger.info(`Product with sku ${updatedProduct.sku} was successfully updated!`);
       }
     }
   } catch (error) {
     if (error.message.includes("SequelizeUniqueConstraintError")) {
-      response.status(400);
-      response.json({
-        message: "A product with the same sku already exists!",
-      });
+      // response.status(400);
+      // response.json({
+      //   message: "A product with the same sku already exists!",
+      // });
+      const err = {
+        errorCode: 400,
+        message: "A product with the same sku already exists!"
+      }
+      sendErrorResponse(err, response);
     } else if (error.message.includes("SequelizeValidationError")) {
-      response.status(400).send({
-        message: error.message,
-      });
+      // response.status(400).send({
+      //   message: error.message,
+      // });
+      const err = {
+        errorCode: 400,
+        message: error.message
+      };
+      sendErrorResponse(err, response);
     } else {
       setErrorResponse(error, response);
     }
@@ -275,6 +379,7 @@ export const update = async (request, response) => {
 };
 
 export const updateProduct = async (request, response) => {
+  client.increment("endpoint.updateProduct.http.put");
   if (
     !request.body.name ||
     !request.body.description ||
@@ -282,61 +387,106 @@ export const updateProduct = async (request, response) => {
     !request.body.manufacturer ||
     !request.body.quantity
   ) {
-    response.status(400);
-    response.json({
-      message: "A required field is empty.",
-    });
+    // response.status(400);
+    // response.json({
+    //   message: "A required field is empty.",
+    // });
+    const err = {
+      errorCode: 400,
+      message: "A required field is empty."
+    };
+    sendErrorResponse(err, response);
     return;
   }
   update(request, response);
 };
 
 export const deleteProduct = async (request, response) => {
+  client.increment("endpoint.deleteProduct.http.delete");
   const productId = request.params.id;
 
   if (isNaN(productId)) {
-    response.status(400).send({
-      message: "Invalid Product ID",
-    });
+    // response.status(400).send({
+    //   message: "Invalid Product ID",
+    // });
+    const err = {
+      errorCode: 400,
+      message: "Invalid Product ID"
+    };
+    sendErrorResponse(err, response);
     return;
   }
 
   try {
     const result = await getAuthorizedUser(request, response);
     if (result.message) {
-      response.status(401).json({
-        message: result.message,
-      });
+      // response.status(401).json({
+      //   message: result.message,
+      // });
+      const err = {
+        errorCode: 401,
+        message: result.message
+      };
+      sendErrorResponse(err, response);
     } else {
       const product = await productService.getProduct(productId);
 
       if (!product) {
-        response.status(404).send({
-          message: "Product not found!",
-        });
+        // response.status(404).send({
+        //   message: "Product not found!",
+        // });
+        const err = {
+          errorCode: 404,
+          message: "Product not found!"
+        };
+        sendErrorResponse(err, response);
         return;
       }
 
       if (product.owner_user_id != result.id) {
-        response.status(403).send({
-          message: "Forbidden",
-        });
+        // response.status(403).send({
+        //   message: "Forbidden",
+        // });
+        const err = {
+          errorCode: 403,
+          message: "Forbidden"
+        };
+        sendErrorResponse(err, response);
         return;
       } else {
         const images = await (uploadService.getImagesByProduct(productId));
 
         await (deleteProductFromS3(Config.s3bucketName, `Product ${productId}/`));
+        logger.info(`Product ${productId} was successfully deleted from the S3 bucket.`);
         await Promise.all(images.map((image) => uploadService.deleteImage(image.id, productId)));
-        
+        logger.info(`Images metadata belonging to the product ${productId} was deleted successfully!`);
+
         const res = await productService.deleteProduct(productId);
-        response.status(204).send();
+        if (!res) {
+          // response.status(404).send({
+          //   message: "The product doesn't exist."
+          // });
+          const err = {
+            errorCode: 404,
+            message: "The product doesn't exist."
+          };
+          sendErrorResponse(err, response);
+        } else {
+          response.status(204).send();
+        }
+        // response.status(204).send();
       }
     }
   } catch (error) {
     if (error.message.includes("SequelizeValidationError")) {
-      response.status(400).send({
-        message: error.message,
-      });
+      // response.status(400).send({
+      //   message: error.message,
+      // });
+      const err = {
+        errorCode: 400,
+        message: error.message
+      };
+      sendErrorResponse(err, response);
     } else {
       setErrorResponse(error, response);
     }

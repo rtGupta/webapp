@@ -4,8 +4,10 @@ import { v4 as uuidv4 } from "uuid";
 import * as productController from "../controller/product-controller.js";
 import * as uploadService from "../service/upload-service.js";
 
-import Config from "../../config/config.js";
 import { s3 } from "./s3.js";
+import { client } from "../../util/statsd_client.js";
+import Config from "../../config/config.js";
+import logger from "../../util/logger.js";
 
 const storage = multer.memoryStorage();
 
@@ -80,6 +82,11 @@ const getSignedURL = (bucket, key, expires = 3600) => {
 const setErrorResponse = (error, response) => {
   response.status(500);
   response.json(error);
+  logger.error(
+    `${error.status || 500} - ${response.statusMessage} - ${error.message} - ${
+      request.originalUrl
+    } - ${request.method} - ${request.ip}`
+  )
 };
 
 const setSuccessResponse = (obj, response) => {
@@ -87,7 +94,16 @@ const setSuccessResponse = (obj, response) => {
   response.json(obj);
 };
 
+const sendErrorResponse = (obj, response) => {
+  response.status(obj.errorCode);
+  response.json({
+    message: obj.message
+  });
+  logger.error(`${obj.errorCode} - ${response.statusMessage} - ${obj.message}`);
+};
+
 export const uploadImage = async (request, response) => {
+  client.increment("endpoint.uploadImage.http.post");
   try {
     const result = await productController.fetchProductByUser(
       request,
@@ -95,13 +111,23 @@ export const uploadImage = async (request, response) => {
     );
 
     if (!result.product) {
-      response.status(result.status).send(result);
+      // response.status(result.status).send(result);
+      const err = {
+        errorCode: result.status,
+        message: result
+      };
+      sendErrorResponse(err, response);
       return;
     } else {
       if (!("file" in request.body) || !request.file) {
-        response.status(400).json({
-          message: "Bad Request",
-        });
+        // response.status(400).json({
+        //   message: "Bad Request",
+        // });
+        const err = {
+          errorCode: 400,
+          message: "Bad Request"
+        };
+        sendErrorResponse(err, response);
         return;
       }
 
@@ -138,7 +164,12 @@ export const getImagesList = async (request, response) => {
     );
 
     if (!result.product) {
-      response.status(result.status).send(result);
+      // response.status(result.status).send(result);
+      const err = {
+        errorCode: result.status,
+        message: result
+      };
+      sendErrorResponse(err, response);
       return;
     } else {
       const data = await uploadService
@@ -166,9 +197,14 @@ export const fetchImageByID = async (request, response) => {
   const imageId = request.params.imageId;
 
   if (!productId || !imageId) {
-    response.status(400).send({
-      message: "Bad Request",
-    });
+    // response.status(400).send({
+    //   message: "Bad Request",
+    // });
+    const err = {
+      errorCode: 400,
+      message: "Bad Request"
+    };
+    sendErrorResponse(err, response);
     return;
   } else {
     try {
@@ -200,16 +236,27 @@ export const fetchImageByID = async (request, response) => {
 };
 
 export const getImage = async (request, response) => {
+  client.increment("endpoint.fetchImage.http.get");
   try {
     const result = await fetchImageByID(request, response);
     if (!result.image) {
-      response.status(result.status).send(result);
+      // response.status(result.status).send(result);
+      const err = {
+        errorCode: result.status,
+        message: result
+      };
+      sendErrorResponse(err, response);
       return;
     } else {
       if (result.image.product_id != request.params.id) {
-        response.status(404).send({
+        // response.status(404).send({
+        //   message: "The image doesn't exist for the product."
+        // });
+        const err = {
+          errorCode: 404,
           message: "The image doesn't exist for the product."
-        });
+        };
+        sendErrorResponse(err, response);
       } else {
         setSuccessResponse(result.image, response);
       }
@@ -220,10 +267,16 @@ export const getImage = async (request, response) => {
 };
 
 export const deleteImage = async (request, response) => {
+  client.increment("endpoint.deleteImage.http.delete");
   try {
     const result = await fetchImageByID(request, response);
     if (!result.image) {
-      response.status(result.status).send(result);
+      // response.status(result.status).send(result);
+      const err = {
+        errorCode: result.status,
+        message: result
+      };
+      sendErrorResponse(err, response);
       return;
     } else {
       await deleteS3Object(
@@ -232,9 +285,14 @@ export const deleteImage = async (request, response) => {
       );
       const res = await uploadService.deleteImage(request.params.imageId, result.product.id);
       if (!res) {
-        response.status(404).send({
+        // response.status(404).send({
+        //   message: "The image doesn't exist for the given product."
+        // });
+        const err = {
+          errorCode: 404,
           message: "The image doesn't exist for the given product."
-        });
+        };
+        sendErrorResponse(err, response);
       } else {
         response.status(204).send();
       }
