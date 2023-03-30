@@ -39,6 +39,9 @@ sudo systemctl enable pm2-ec2-user
 sudo systemctl start pm2-ec2-user
 sudo systemctl status pm2-ec2-user
 
+# Move the CloudWatch configuration file
+sudo mv /tmp/cloudwatch_config.json /opt/cloudwatch_config.json
+
 # Unzip the source code for webapp
 unzip /tmp/release.zip -d /home/ec2-user/webapp
 

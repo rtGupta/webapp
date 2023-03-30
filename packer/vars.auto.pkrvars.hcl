@@ -6,5 +6,5 @@ ssh_username      = "ec2-user"
 device_name       = "/dev/xvda"
 volume_type       = "gp2"
 volume_size       = 8
-file_sources_list = ["./packer/webapp.conf", "/home/runner/work/webapp/webapp/release.zip"]
-shell_source      = "./packer/env_setup.sh"
+file_sources_list = ["./packer/webapp.conf", "./packer/cloudwatch_config.json", "/home/runner/work/webapp/webapp/release.zip"]
+shell_sources     = ["./packer/setup_cloudwatch.sh", "./packer/env_setup.sh"]

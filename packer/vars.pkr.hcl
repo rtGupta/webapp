@@ -54,6 +54,6 @@ variable "file_sources_list" {
   type = list(string)
 }
 
-variable "shell_source" {
-  type = string
+variable "shell_sources" {
+  type = list(string)
 }

@@ -47,6 +47,6 @@ build {
   }
 
   provisioner "shell" {
-    script = var.shell_source
+    scripts = var.shell_sources
   }
 }
