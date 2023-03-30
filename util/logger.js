@@ -3,7 +3,7 @@ import { createLogger, format, transports } from "winston";
 const logger = createLogger({
 transports:
     new transports.File({
-    filename: '/home/ec2-user/.pm2/logs/webapp-out.log',
+    filename: 'logs/webapp-server.log',
     format:format.combine(
         format.timestamp({format: 'MMM-DD-YYYY HH:mm:ss'}),
         format.align(),
