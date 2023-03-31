@@ -299,7 +299,7 @@ export const update = async (request, response) => {
         };
 
         response.status(204).json(updatedUserObj);
-        logger.info(`User ${user.username} was updated successfully!`);
+        logger.info(`User ${updatedUserObj.username} was updated successfully!`);
         return;
       }
     }
