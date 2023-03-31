@@ -114,7 +114,7 @@ export const uploadImage = async (request, response) => {
       // response.status(result.status).send(result);
       const err = {
         errorCode: result.status,
-        message: result
+        message: result.message
       };
       sendErrorResponse(err, response);
       return;
@@ -167,7 +167,7 @@ export const getImagesList = async (request, response) => {
       // response.status(result.status).send(result);
       const err = {
         errorCode: result.status,
-        message: result
+        message: result.message
       };
       sendErrorResponse(err, response);
       return;
@@ -243,7 +243,7 @@ export const getImage = async (request, response) => {
       // response.status(result.status).send(result);
       const err = {
         errorCode: result.status,
-        message: result
+        message: result.message
       };
       sendErrorResponse(err, response);
       return;
@@ -274,7 +274,7 @@ export const deleteImage = async (request, response) => {
       // response.status(result.status).send(result);
       const err = {
         errorCode: result.status,
-        message: result
+        message: result.message
       };
       sendErrorResponse(err, response);
       return;
