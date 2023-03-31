@@ -237,8 +237,12 @@ export const get = async (request, response) => {
   }
 };
 
-export const update = async (request, response) => {
+export const patchProduct = async (request, response) => {
   client.increment("endpoint.updateProduct.http.patch");
+  update(request, response);
+}
+
+export const update = async (request, response) => {
   const productId = request.params.id;
 
   if (isNaN(productId)) {

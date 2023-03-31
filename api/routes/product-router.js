@@ -10,7 +10,7 @@ router.route("/product/:id")
             .get(productController.get)
             .put(productController.updateProduct)
             .delete(productController.deleteProduct)
-            .patch(productController.update);
+            .patch(productController.patchProduct);
 
 router.route("/product/:id/image")
             .post(imageController.upload.single('fileType'), imageController.uploadImage)
