@@ -150,6 +150,7 @@ export const uploadImage = async (request, response) => {
       };
       const data = await uploadService.upload(payload);
       setSuccessResponse(data, response);
+      logger.info(`Image ${data.image_id} was added successfully for the product ${data.product_id}!`);
     }
   } catch (error) {
     setErrorResponse(error, response);
@@ -259,6 +260,7 @@ export const getImage = async (request, response) => {
         sendErrorResponse(err, response);
       } else {
         setSuccessResponse(result.image, response);
+        logger.info(`Image ${result.image.image_id} was retrieved successfully!`);
       }
     }
   } catch (error) {
@@ -295,6 +297,7 @@ export const deleteImage = async (request, response) => {
         sendErrorResponse(err, response);
       } else {
         response.status(204).send();
+        logger.info(`Image ${result.image.image_id} was deleted successfully!`);
       }
     }
   } catch (error) {
