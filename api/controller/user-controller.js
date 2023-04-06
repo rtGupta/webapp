@@ -205,6 +205,7 @@ export const get = async (request, response) => {
         };
 
         response.status(200).json(resData);
+        logger.info(`User ${resData.id} was retrieved successfully!`);
       }
     }
   } catch (error) {

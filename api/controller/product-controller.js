@@ -118,6 +118,7 @@ export const post = async (request, response) => {
         };
         const product = await productService.createProduct(payload);
         setSuccessResponse(product, response);
+        logger.info(`Product with SKU ${product.sku} was added successfully!`);
       }
     }
   } catch (error) {
@@ -232,6 +233,7 @@ export const get = async (request, response) => {
     };
 
     response.status(200).send(productData);
+    logger.info(`Product ${productData.id} was retrieved successfully!`);
   } catch (error) {
     setErrorResponse(error, response);
   }
@@ -477,6 +479,7 @@ export const deleteProduct = async (request, response) => {
           sendErrorResponse(err, response);
         } else {
           response.status(204).send();
+          logger.info('Product was deleted successfully!');
         }
         // response.status(204).send();
       }
