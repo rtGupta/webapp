@@ -13,10 +13,10 @@ echo "==> Checking the Nginx status"
 sudo systemctl status nginx
 
 # NGINX Configuration
-sudo mv /tmp/webapp.conf /etc/nginx/conf.d/
+# sudo mv /tmp/webapp.conf /etc/nginx/conf.d/
 
-sudo systemctl restart nginx
-sudo systemctl status nginx
+# sudo systemctl restart nginx
+# sudo systemctl status nginx
 
 # Install Node.js and NPM
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
