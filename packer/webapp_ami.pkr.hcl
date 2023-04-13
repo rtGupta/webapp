@@ -49,4 +49,9 @@ build {
   provisioner "shell" {
     scripts = var.shell_sources
   }
+
+  post-processor "manifest" {
+        output = "manifest.json"
+        strip_path = true
+    }
 }
