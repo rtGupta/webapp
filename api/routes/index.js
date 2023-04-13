@@ -3,6 +3,10 @@ import productRouter from "./product-router.js";
 import { client } from "../../util/statsd_client.js";
 
 export default (app) => {
+  app.get("/health", (req, res) => {
+    res.status(200).send("Ok");
+    client.increment("endpoint.health.http.get");
+  });
   app.get("/healthz", (req, res) => {
     res.status(200).send("Ok");
     client.increment("endpoint.healthz.http.get");
