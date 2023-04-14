@@ -87,7 +87,7 @@ jobs:
         with:
           name: manifest
 
-      - name: Fetch latest AMI ID and Launch Template node-version
+      - name: Fetch latest AMI ID and Launch Template Version
         id: variables
         run: |
           latest_ami=$(cat manifest.json | jq '.builds[0].artifact_id' | tr -d '"' | awk 'match($0, /ami-.*/) { print substr($0, RSTART, RLENGTH) }')
@@ -104,4 +104,4 @@ jobs:
 
       - name: Trigger Autoscaling instance refresh
         run: |
-          aws autoscaling start-instance-refresh --auto-scaling-group-name aws-dev-asg --strategy Rolling --desired-configuration '{"LaunchTemplate": {"LaunchTemplateName":"asg_launch_config", "Version":"$Latest"}}'
+          aws autoscaling start-instance-refresh --auto-scaling-group-name aws-demo-asg --strategy Rolling --desired-configuration '{"LaunchTemplate": {"LaunchTemplateName":"asg_launch_config", "Version":"$Latest"}}'
